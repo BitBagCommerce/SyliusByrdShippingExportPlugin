@@ -13,20 +13,29 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
-    name: "PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}, Sylius ${{matrix.sylius}}"
+    name: "Sylius ${{ matrix.sylius }}, PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}"
 
     strategy:
       fail-fast: false
       matrix:
-        php: [7.4, 7.3]
-        node: [10.x]
+        php: [7.3, 7.4, 8.0]
+        node: [14.x]
         mysql: [5.7, 8.0]
-        sylius: [~1.8, ~1.9]
+        sylius: [~1.10.0, ~1.11.0]
 
         exclude:
           - # PHP 7.3 does not support "caching_sha2_password" authentication plugin which is a default one in MySQL 8.0
             php: 7.3
             mysql: 8.0
+          -
+            sylius: ~1.10.0
+            php: 7.3
+          -
+            sylius: ~1.11.0
+            php: 7.3
+          -
+            sylius: ~1.11.0
+            php: 7.4
 
     env:
       APP_ENV: test
@@ -102,9 +111,11 @@ jobs:
           key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.json **/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
       -
-        name: Add Sylius requirement
-        run: composer require sylius/sylius:${{ matrix.sylius }}
+        name: Restrict Sylius version
+        if: matrix.sylius != ''
+        run: composer require "sylius/sylius:${{ matrix.sylius }}" --no-update --no-scripts --no-interaction
 
       -
         name: Install PHP dependencies
