@@ -59,7 +59,7 @@ final class ByrdProductMappingType extends AbstractType
                     return;
                 }
 
-                if ($event->getData()->getByrdProductSku() === null || $event->getData()->getByrdProductSku() === '') {
+                if (null === $event->getData()->getByrdProductSku() || '' === $event->getData()->getByrdProductSku()) {
                     $event->getForm()->addError(new FormError(
                         $this->translator->trans(
                             'bitbag_sylius_byrd_shipping_export_plugin.ui.form.error.sku_is_required'
@@ -70,7 +70,7 @@ final class ByrdProductMappingType extends AbstractType
                 }
 
                 $existingMapping = $this->byrdProductMappingRepository->findOneBy([
-                    'product' => $event->getData()->getProduct()->getId()
+                    'product' => $event->getData()->getProduct()->getId(),
                 ]);
                 if ($existingMapping && $existingMapping->getId() !== $event->getForm()->getData()->getId()) {
                     $event->getForm()->addError(new FormError(
@@ -83,7 +83,7 @@ final class ByrdProductMappingType extends AbstractType
                 }
 
                 $existingMapping = $this->byrdProductMappingRepository->findOneBy([
-                    'byrdProductSku' => $event->getData()->getByrdProductSku()
+                    'byrdProductSku' => $event->getData()->getByrdProductSku(),
                 ]);
                 if ($existingMapping && $existingMapping->getId() !== $event->getForm()->getData()->getId()) {
                     $event->getForm()->addError(new FormError(

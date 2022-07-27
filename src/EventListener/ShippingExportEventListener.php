@@ -106,7 +106,7 @@ final class ShippingExportEventListener
     {
         /** @var ShippingGatewayInterface|null $byrdGateway */
         $byrdGateway = $this->shippingGatewayRepository->findOneByCode('byrd');
-        if ($byrdGateway === null) {
+        if (null === $byrdGateway) {
             return;
         }
 
@@ -127,11 +127,11 @@ final class ShippingExportEventListener
             'shipment' => $shipment->getId(),
         ]);
 
-        if ($exportObject === null) {
+        if (null === $exportObject) {
             return;
         }
 
-        if ($exportObject->getState() !== ShippingExportInterface::STATE_NEW) {
+        if (ShippingExportInterface::STATE_NEW !== $exportObject->getState()) {
             return;
         }
 

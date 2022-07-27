@@ -35,7 +35,7 @@ final class GenerateTokenByrdRequest extends AbstractByrdRequest implements Gene
 
     public function buildRequest(?string $authorizationToken): array
     {
-        if ($this->username === null && $this->password === null) {
+        if (null === $this->username && null === $this->password) {
             throw new InvalidCredentialsException('You have to set up credentials via setCredentials(...) method');
         }
 

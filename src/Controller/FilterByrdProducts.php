@@ -37,7 +37,7 @@ final class FilterByrdProducts
     {
         /** @var ShippingGatewayInterface|null $gateway */
         $gateway = $this->shippingGatewayRepository->findOneByCode('byrd');
-        if ($gateway === null) {
+        if (null === $gateway) {
             return new Response('[]');
         }
 

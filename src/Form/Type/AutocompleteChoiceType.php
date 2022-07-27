@@ -32,7 +32,11 @@ final class AutocompleteChoiceType extends AbstractType
     {
     }
 
-    public function buildView(FormView $view, FormInterface $form, array $options): void
+    public function buildView(
+        FormView $view,
+        FormInterface $form,
+        array $options
+    ): void
     {
         $view->vars['multiple'] = $options['multiple'];
         $view->vars['choice_name'] = $options['choice_name'];

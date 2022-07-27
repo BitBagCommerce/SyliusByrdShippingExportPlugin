@@ -86,24 +86,24 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
     public function buildRequest(?string $authorizationToken): array
     {
-        if ($this->shippingGateway === null) {
+        if (null === $this->shippingGateway) {
             throw new NoShippingGatewayAttachedException(
                 'You have to set up shippingGateway via setShippingGateway(...) method'
             );
         }
 
-        if ($this->order === null) {
+        if (null === $this->order) {
             throw new NoOrderAttachedException('You have to set up order via setOrder(...) method');
         }
 
-        if ($authorizationToken === null) {
+        if (null === $authorizationToken) {
             throw new AuthorizationIssueException('No token provided');
         }
 
         $request = $this->constructNewShippingRequestBase($this->order);
 
         $request['shipmentItems'] = $this->createShipmentItemsRequest($this->order, $authorizationToken);
-        if (count($request['shipmentItems']) === 0) {
+        if (0 === count($request['shipmentItems'])) {
             throw new EmptyProductListException('Cannot sent request with no product');
         }
 
@@ -156,7 +156,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
             if (!$this->shouldAutoMatchBySku()) {
                 /** @var ByrdProductMappingInterface|null $byrdMapping */
                 $byrdMapping = $this->byrdProductMappingRepository->findForProduct($product);
-                if ($byrdMapping === null) {
+                if (null === $byrdMapping) {
                     continue;
                 }
 
@@ -175,14 +175,14 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
     private function shouldAutoMatchBySku(): bool
     {
-        if ($this->shippingGateway === null) {
+        if (null === $this->shippingGateway) {
             return false;
         }
 
         /** @var array $config */
         $config = $this->shippingGateway->getConfig();
 
-        return isset($config['auto_sku_matching']) && $config['auto_sku_matching'] === true;
+        return isset($config['auto_sku_matching']) && true === $config['auto_sku_matching'];
     }
 
     private function createShipmentItem(
@@ -209,7 +209,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
         $response = $this->requestSender->sendAuthorized($this->findProductRequest, $authorizationToken);
 
         $content = json_decode($response->getContent());
-        if (isset($content->data) && is_array($content->data) && count($content->data) === 0) {
+        if (isset($content->data) && is_array($content->data) && 0 === count($content->data)) {
             throw new ProductNotFoundException('Product with SKU: ' . $byrdProductSku . ' was not found');
         }
         $product = current($content->data);
@@ -236,7 +236,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
     private function hasConfiguredByrdShipment(OrderItemInterface $orderItem): bool
     {
-        if ($this->shippingGateway === null) {
+        if (null === $this->shippingGateway) {
             return false;
         }
 
@@ -249,7 +249,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
         /** @var ShippingCategoryInterface|null $variantsShippingCategory */
         $variantsShippingCategory = $variant->getShippingCategory();
-        if ($variantsShippingCategory === null) {
+        if (null === $variantsShippingCategory) {
             return false;
         }
 
@@ -259,7 +259,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
         /** @var ShippingMethodInterface $gatewaysMethod */
         foreach ($gatewaysMethods as $gatewaysMethod) {
             $category = $gatewaysMethod->getCategory();
-            if ($category !== null && $category->getId() === $variantsShippingCategory->getId()) {
+            if (null !== $category && $category->getId() === $variantsShippingCategory->getId()) {
                 return true;
             }
         }

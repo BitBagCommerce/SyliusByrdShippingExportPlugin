@@ -59,7 +59,7 @@ final class ByrdHttpClient implements ByrdHttpClientInterface
         $this->createShipmentRequest->setShippingGateway($shippingGateway);
         $response = $this->requestSender->sendAuthorized($this->createShipmentRequest, $token);
 
-        if ($response->getStatusCode() !== Response::HTTP_CREATED) {
+        if (Response::HTTP_CREATED !== $response->getStatusCode()) {
             throw new \InvalidArgumentException('Something went wrong: ' . $response->getContent());
         }
     }
@@ -74,7 +74,7 @@ final class ByrdHttpClient implements ByrdHttpClientInterface
 
         $response = $this->requestSender->send($this->generateTokenRequest);
 
-        if ($response->getStatusCode() != Response::HTTP_CREATED) {
+        if (Response::HTTP_CREATED != $response->getStatusCode()) {
             throw new AuthorizationIssueException('Authorization issue');
         }
 
@@ -96,7 +96,7 @@ final class ByrdHttpClient implements ByrdHttpClientInterface
         /** @var ResponseInterface $response */
         $response = $this->requestSender->sendAuthorized($this->findProductByrdRequest, $token);
         $response = json_decode($response->getContent());
-        if (!is_array($response->data) || count($response->data) === 0) {
+        if (!is_array($response->data) || 0 === count($response->data)) {
             return [];
         }
 
