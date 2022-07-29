@@ -48,10 +48,10 @@ abstract class AbstractByrdRequest implements AbstractByrdRequestInterface
             'headers' => [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
-            ]
+            ],
         ];
 
-        if ($parameters !== null && count($parameters) > 0) {
+        if (null !== $parameters && 0 < count($parameters)) {
             $request['body'] = json_encode($parameters);
         }
 

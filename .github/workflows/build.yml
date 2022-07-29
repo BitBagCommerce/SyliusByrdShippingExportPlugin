@@ -169,6 +169,10 @@ jobs:
         run: vendor/bin/phpstan analyse -c phpstan.neon -l max src/
 
       -
+        name: Run ECS
+        run: vendor/bin/ecs check src
+
+      -
         name: Run PHPSpec
         run: vendor/bin/phpspec run --ansi -f progress --no-interaction
 
