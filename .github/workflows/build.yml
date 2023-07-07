@@ -80,12 +80,6 @@ jobs:
           sudo sysctl -w vm.max_map_count=262144
 
       -
-        name: Runs Elasticsearch
-        uses: elastic/elastic-github-actions/elasticsearch@master
-        with:
-          stack-version: 7.16.3
-
-      -
         name: Output PHP version for Symfony CLI
         run: php -v | head -n 1 | awk '{ print $2 }' > .php-version
 
@@ -119,6 +113,7 @@ jobs:
         name: Restrict Symfony version
         if: matrix.symfony != ''
         run: |
+          composer config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer global config --no-plugins allow-plugins.symfony/flex true
           composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^1.10"
           composer config extra.symfony.require "${{ matrix.symfony }}"
