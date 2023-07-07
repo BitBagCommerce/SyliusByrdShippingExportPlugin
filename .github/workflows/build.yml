@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3, 7.4, 8.0]
+        php: [8.0]
         node: [14.x]
         mysql: [5.7, 8.0]
         sylius: [~1.10.0, ~1.11.0]
@@ -122,6 +122,8 @@ jobs:
         name: Install PHP dependencies
         run: | 
           composer global config --no-plugins allow-plugins.symfony/thanks true
+          composer global config --no-plugins allow-plugins.symfony/flex true
+          composer global require --no-progress --no-scripts --no-plugins "symfony/flex:^1.10"
           composer install --no-interaction --no-scripts
 
       -
