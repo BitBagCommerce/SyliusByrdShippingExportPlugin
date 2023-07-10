@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": "^7.3 || ^8.0",
-        "bitbag/shipping-export-plugin": "^1.3",
+        "bitbag/shipping-export-plugin": "^3.0",
         "sylius/sylius": "~1.10.0 || ~1.11.0",
         "symfony/http-client": "4.4 | ^5.2"
     },
