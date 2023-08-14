@@ -55,6 +55,9 @@
         "symplify/console-color-diff": "^8.0 || ^9.3",
         "vimeo/psalm": "4.24"
     },
+    "conflict": {
+        "doctrine/orm": ">=2.15.2"
+    },
     "config": {
         "sort-packages": true
     },
