@@ -53,7 +53,8 @@
         "symfony/intl": "^4.4 || ^5.2",
         "symfony/web-profiler-bundle": "^4.4 || ^5.2",
         "symplify/console-color-diff": "^8.0 || ^9.3",
-        "vimeo/psalm": "4.24"
+        "vimeo/psalm": "4.24",
+        "symfony/webpack-encore-bundle": "^1.17"
     },
     "conflict": {
         "doctrine/orm": ">=2.15.2"
