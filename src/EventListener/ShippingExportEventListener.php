@@ -22,7 +22,7 @@ use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ShippingExportEventListener
@@ -36,8 +36,8 @@ final class ShippingExportEventListener
     /** @var ShippingExportRepositoryInterface */
     private $shippingExportRepository;
 
-    /** @var FlashBagInterface */
-    private $flashBag;
+    /** @var RequestStack */
+    private $requestStack;
 
     /** @var Filesystem */
     private $filesystem;
@@ -55,7 +55,7 @@ final class ShippingExportEventListener
         ByrdHttpClientInterface $byrdHttpClient,
         EntityManagerInterface $entityManager,
         ShippingExportRepositoryInterface $shippingExportRepository,
-        FlashBagInterface $flashBag,
+        RequestStack $requestStack,
         Filesystem $filesystem,
         TranslatorInterface $translator,
         ShippingGatewayRepositoryInterface $shippingGatewayRepository,
@@ -64,7 +64,7 @@ final class ShippingExportEventListener
         $this->byrdHttpClient = $byrdHttpClient;
         $this->entityManager = $entityManager;
         $this->shippingExportRepository = $shippingExportRepository;
-        $this->flashBag = $flashBag;
+        $this->requestStack = $requestStack;
         $this->filesystem = $filesystem;
         $this->translator = $translator;
         $this->shippingLabelsPath = $shippingLabelsPath;
@@ -137,7 +137,7 @@ final class ShippingExportEventListener
 
         $event = new ExportShipmentEvent(
             $exportObject,
-            $this->flashBag,
+            $this->requestStack->getSession()->getFlashBag(),
             $this->entityManager,
             $this->filesystem,
             $this->translator,
