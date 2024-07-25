@@ -24,9 +24,10 @@ final class ByrdProductMappingRepository extends IntegrationTestCase
     public function SetUp(): void
     {
         parent::SetUp();
+        $container = self::getContainer();
 
-        $this->productRepository = self::$container->get('sylius.repository.product');
-        $this->byrdProductMappingRepository = self::$container->get('bitbag.byrd_shipping_export_plugin.repository.byrd_product_mapping');
+        $this->productRepository = $container->get('sylius.repository.product');
+        $this->byrdProductMappingRepository = $container->get('bitbag.byrd_shipping_export_plugin.repository.byrd_product_mapping');
     }
 
     public function test_mapping_for_product_was_found(): void
