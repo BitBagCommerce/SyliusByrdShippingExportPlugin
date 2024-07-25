@@ -14,14 +14,13 @@ use BitBag\SyliusByrdShippingExportPlugin\Api\Client\ByrdHttpClientInterface;
 use BitBag\SyliusByrdShippingExportPlugin\Api\Exception\ByrdApiException;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingExportInterface;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingGatewayInterface;
-use BitBag\SyliusShippingExportPlugin\Event\ExportShipmentEvent;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingExportRepositoryInterface;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingGatewayRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -39,42 +38,33 @@ final class ShippingExportEventListener
     /** @var RequestStack */
     private $requestStack;
 
-    /** @var Filesystem */
-    private $filesystem;
-
     /** @var TranslatorInterface */
     private $translator;
 
-    /** @var string */
-    private $shippingLabelsPath;
-
     /** @var ShippingGatewayRepositoryInterface */
     private $shippingGatewayRepository;
+
 
     public function __construct(
         ByrdHttpClientInterface $byrdHttpClient,
         EntityManagerInterface $entityManager,
         ShippingExportRepositoryInterface $shippingExportRepository,
         RequestStack $requestStack,
-        Filesystem $filesystem,
         TranslatorInterface $translator,
         ShippingGatewayRepositoryInterface $shippingGatewayRepository,
-        string $shippingLabelsPath
     ) {
         $this->byrdHttpClient = $byrdHttpClient;
         $this->entityManager = $entityManager;
         $this->shippingExportRepository = $shippingExportRepository;
         $this->requestStack = $requestStack;
-        $this->filesystem = $filesystem;
         $this->translator = $translator;
-        $this->shippingLabelsPath = $shippingLabelsPath;
         $this->shippingGatewayRepository = $shippingGatewayRepository;
     }
 
-    public function exportShipment(ExportShipmentEvent $exportShipmentEvent): void
+    public function exportShipment(ResourceControllerEvent $exportShipmentEvent): void
     {
         /** @var ShippingExportInterface $shippingExport */
-        $shippingExport = $exportShipmentEvent->getShippingExport();
+        $shippingExport = $exportShipmentEvent->getSubject();
 
         /** @var ShipmentInterface $shipment */
         $shipment = $shippingExport->getShipment();
@@ -90,16 +80,21 @@ final class ShippingExportEventListener
         } catch (ByrdApiException $e) {
             $shippingExport->setState('failed');
             $this->entityManager->flush();
-
-            $exportShipmentEvent->addErrorFlash(
+            $this->requestStack->getSession()->getBag('flashes')->add(
+                'error',
                 sprintf('Byrd error for order %s: %s', $order->getNumber(), $e->getMessage())
             );
 
             return;
         }
 
-        $exportShipmentEvent->addSuccessFlash();
-        $exportShipmentEvent->exportShipment();
+        $message = $this->translator->trans('bitbag.ui.shipment_data_has_been_exported');
+        $this->requestStack->getSession()->getBag('flashes')->add(
+            'success',
+            $message
+        );
+
+        $this->export($shippingExport);
     }
 
     public function autoExport(PaymentInterface $payment): void
@@ -135,15 +130,14 @@ final class ShippingExportEventListener
             return;
         }
 
-        $event = new ExportShipmentEvent(
-            $exportObject,
-            $this->requestStack->getSession()->getFlashBag(),
-            $this->entityManager,
-            $this->filesystem,
-            $this->translator,
-            $this->shippingLabelsPath
-        );
+        $exportShipmentEvent = new ResourceControllerEvent($exportObject);
+        $this->exportShipment($exportShipmentEvent);
+    }
 
-        $this->exportShipment($event);
+    public function export(ShippingExportInterface $shippingExport): void
+    {
+        $shippingExport->setState(ShippingExportInterface::STATE_EXPORTED);
+        $shippingExport->setExportedAt(new \DateTime());
+        $this->shippingExportRepository->add($shippingExport);
     }
 }
