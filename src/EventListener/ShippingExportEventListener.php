@@ -75,12 +75,14 @@ final class ShippingExportEventListener
         /** @var ShippingGatewayInterface $shippingGateway */
         $shippingGateway = $shippingExport->getShippingGateway();
 
+        $flashBag = $this->requestStack->getSession()->getBag('flashes');
+
         try {
             $this->byrdHttpClient->createShipment($order, $shippingGateway);
         } catch (ByrdApiException $e) {
             $shippingExport->setState('failed');
             $this->entityManager->flush();
-            $this->requestStack->getSession()->getBag('flashes')->add(
+            $flashBag->add(
                 'error',
                 sprintf('Byrd error for order %s: %s', $order->getNumber(), $e->getMessage()),
             );
@@ -89,7 +91,7 @@ final class ShippingExportEventListener
         }
 
         $message = $this->translator->trans('bitbag.ui.shipment_data_has_been_exported');
-        $this->requestStack->getSession()->getBag('flashes')->add(
+        $flashBag->add(
             'success',
             $message,
         );
