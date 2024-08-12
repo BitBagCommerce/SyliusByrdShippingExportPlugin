@@ -2,7 +2,7 @@
 
 ---
 ### Introduction
-Byrd Technologies, known as "byrd," is fulfillment company specializing in e-commerce solutions.
+Byrd Technologies, known as "byrd", is fulfillment company specializing in e-commerce solutions.
 The company provides third-party logistics (3PL) services,
 helping online retailers manage and optimize their shipping and fulfillment processes across Europe.
 
