@@ -1,7 +1,7 @@
 ## Installation
 
 ```bash
-$ composer require bitbag/byrd-shipping-export-plugin
+$ composer require bitbag/byrd-shipping-export-plugin --no-scripts
 ```
 
 Add plugin dependencies to your `config/bundles.php` file:
@@ -33,6 +33,12 @@ imports:
   bitbag_sylius_byrd_shipping_export_plugin:
     resource: "@BitBagByrdShippingExportPlugin/Resources/config/routing.yaml"
     prefix: /admin
+```
+
+Clear the cache:
+
+```bash
+bin/console cache:clear
 ```
 
 Update your database schema
