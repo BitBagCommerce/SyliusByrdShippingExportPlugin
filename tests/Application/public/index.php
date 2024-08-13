@@ -1,9 +1,9 @@
 
 <?php
 
-use Tests\BitBag\SyliusByrdShippingExportPlugin\Application\Kernel;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
+use Tests\BitBag\SyliusByrdShippingExportPlugin\Application\Kernel;
 
 require dirname(__DIR__) . '/config/bootstrap.php';
 

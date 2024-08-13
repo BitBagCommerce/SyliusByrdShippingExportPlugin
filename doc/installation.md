@@ -1,7 +1,7 @@
 ## Installation
 
 ```bash
-$ composer require bitbag/byrd-shipping-export-plugin
+$ composer require bitbag/byrd-shipping-export-plugin --no-scripts
 ```
 
 Add plugin dependencies to your `config/bundles.php` file:
@@ -35,9 +35,22 @@ imports:
     prefix: /admin
 ```
 
+Clear the cache:
+
+```bash
+bin/console cache:clear
+```
+
 Update your database schema
 ```bash
 bin/console doctrine:schema:update
 ```
 
 **Note:** If you are running it on production, add the `-e prod` flag to this command.
+
+Add to your .env.local file:
+```
+# .env or .env.local
+
+BYRD_API_URL=https://byrd.cloud/v2
+```

@@ -1,10 +1,11 @@
 <?php
 
 /*
- * This file was created by developers working at BitBag
- * Do you need more information about us and what we do? Visit our https://bitbag.io website!
- * We are hiring developers from all over the world. Join us and start your new, exciting adventure and become part of us: https://bitbag.io/career
-*/
+ * This file has been created by developers from BitBag.
+ * Feel free to contact us once you face any issues or want to start
+ * You can find more information about us on https://bitbag.io and write us
+ * an email on hello@bitbag.io.
+ */
 
 declare(strict_types=1);
 
@@ -62,7 +63,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
         FindProductByrdRequestInterface $findProductRequest,
         ByrdModelFactoryInterface $byrdModelFactory,
         RequestSenderInterface $requestSender,
-        string $apiUrl
+        string $apiUrl,
     ) {
         parent::__construct($apiUrl);
 
@@ -73,13 +74,13 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
     }
 
     public function setOrder(
-        OrderInterface $order
+        OrderInterface $order,
     ): void {
         $this->order = $order;
     }
 
     public function setShippingGateway(
-        ShippingGatewayInterface $shippingGateway
+        ShippingGatewayInterface $shippingGateway,
     ): void {
         $this->shippingGateway = $shippingGateway;
     }
@@ -88,7 +89,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
     {
         if (null === $this->shippingGateway) {
             throw new NoShippingGatewayAttachedException(
-                'You have to set up shippingGateway via setShippingGateway(...) method'
+                'You have to set up shippingGateway via setShippingGateway(...) method',
             );
         }
 
@@ -118,7 +119,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
     }
 
     private function constructNewShippingRequestBase(
-        OrderInterface $order
+        OrderInterface $order,
     ): array {
         /** @var CustomerInterface $customer */
         $customer = $order->getCustomer();
@@ -140,7 +141,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
     private function createShipmentItemsRequest(
         OrderInterface $order,
-        string $authorizationToken
+        string $authorizationToken,
     ): array {
         $shipmentItems = [];
 
@@ -166,7 +167,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
             $shipmentItems[] = $this->createShipmentItem(
                 (string) $sku,
                 $item->getQuantity(),
-                $authorizationToken
+                $authorizationToken,
             );
         }
 
@@ -188,7 +189,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
     private function createShipmentItem(
         string $byrdProductSku,
         int $quantity,
-        string $authorizationToken
+        string $authorizationToken,
     ): array {
         $byrdProduct = $this->fetchByrdProductInformation($byrdProductSku, $authorizationToken);
 
@@ -203,7 +204,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
 
     private function fetchByrdProductInformation(
         string $byrdProductSku,
-        string $authorizationToken
+        string $authorizationToken,
     ): ByrdProduct {
         $this->findProductRequest->setByrdProductSku($byrdProductSku);
         $response = $this->requestSender->sendAuthorized($this->findProductRequest, $authorizationToken);
@@ -217,7 +218,7 @@ final class CreateShipmentByrdRequest extends AbstractByrdRequest implements Cre
         return $this->byrdModelFactory->create(
             $product->id,
             $product->name,
-            $product->description
+            $product->description,
         );
     }
 

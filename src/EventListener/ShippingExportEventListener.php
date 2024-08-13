@@ -1,10 +1,11 @@
 <?php
 
 /*
- * This file was created by developers working at BitBag
- * Do you need more information about us and what we do? Visit our https://bitbag.io website!
- * We are hiring developers from all over the world. Join us and start your new, exciting adventure and become part of us: https://bitbag.io/career
-*/
+ * This file has been created by developers from BitBag.
+ * Feel free to contact us once you face any issues or want to start
+ * You can find more information about us on https://bitbag.io and write us
+ * an email on hello@bitbag.io.
+ */
 
 declare(strict_types=1);
 
@@ -14,15 +15,14 @@ use BitBag\SyliusByrdShippingExportPlugin\Api\Client\ByrdHttpClientInterface;
 use BitBag\SyliusByrdShippingExportPlugin\Api\Exception\ByrdApiException;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingExportInterface;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingGatewayInterface;
-use BitBag\SyliusShippingExportPlugin\Event\ExportShipmentEvent;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingExportRepositoryInterface;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingGatewayRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ShippingExportEventListener
@@ -36,17 +36,11 @@ final class ShippingExportEventListener
     /** @var ShippingExportRepositoryInterface */
     private $shippingExportRepository;
 
-    /** @var FlashBagInterface */
-    private $flashBag;
-
-    /** @var Filesystem */
-    private $filesystem;
+    /** @var RequestStack */
+    private $requestStack;
 
     /** @var TranslatorInterface */
     private $translator;
-
-    /** @var string */
-    private $shippingLabelsPath;
 
     /** @var ShippingGatewayRepositoryInterface */
     private $shippingGatewayRepository;
@@ -55,26 +49,22 @@ final class ShippingExportEventListener
         ByrdHttpClientInterface $byrdHttpClient,
         EntityManagerInterface $entityManager,
         ShippingExportRepositoryInterface $shippingExportRepository,
-        FlashBagInterface $flashBag,
-        Filesystem $filesystem,
+        RequestStack $requestStack,
         TranslatorInterface $translator,
         ShippingGatewayRepositoryInterface $shippingGatewayRepository,
-        string $shippingLabelsPath
     ) {
         $this->byrdHttpClient = $byrdHttpClient;
         $this->entityManager = $entityManager;
         $this->shippingExportRepository = $shippingExportRepository;
-        $this->flashBag = $flashBag;
-        $this->filesystem = $filesystem;
+        $this->requestStack = $requestStack;
         $this->translator = $translator;
-        $this->shippingLabelsPath = $shippingLabelsPath;
         $this->shippingGatewayRepository = $shippingGatewayRepository;
     }
 
-    public function exportShipment(ExportShipmentEvent $exportShipmentEvent): void
+    public function exportShipment(ResourceControllerEvent $exportShipmentEvent): void
     {
         /** @var ShippingExportInterface $shippingExport */
-        $shippingExport = $exportShipmentEvent->getShippingExport();
+        $shippingExport = $exportShipmentEvent->getSubject();
 
         /** @var ShipmentInterface $shipment */
         $shipment = $shippingExport->getShipment();
@@ -85,21 +75,28 @@ final class ShippingExportEventListener
         /** @var ShippingGatewayInterface $shippingGateway */
         $shippingGateway = $shippingExport->getShippingGateway();
 
+        $flashBag = $this->requestStack->getSession()->getBag('flashes');
+
         try {
             $this->byrdHttpClient->createShipment($order, $shippingGateway);
         } catch (ByrdApiException $e) {
             $shippingExport->setState('failed');
             $this->entityManager->flush();
-
-            $exportShipmentEvent->addErrorFlash(
-                sprintf('Byrd error for order %s: %s', $order->getNumber(), $e->getMessage())
+            $flashBag->add(
+                'error',
+                sprintf('Byrd error for order %s: %s', $order->getNumber(), $e->getMessage()),
             );
 
             return;
         }
 
-        $exportShipmentEvent->addSuccessFlash();
-        $exportShipmentEvent->exportShipment();
+        $message = $this->translator->trans('bitbag.ui.shipment_data_has_been_exported');
+        $flashBag->add(
+            'success',
+            $message,
+        );
+
+        $this->export($shippingExport);
     }
 
     public function autoExport(PaymentInterface $payment): void
@@ -135,15 +132,14 @@ final class ShippingExportEventListener
             return;
         }
 
-        $event = new ExportShipmentEvent(
-            $exportObject,
-            $this->flashBag,
-            $this->entityManager,
-            $this->filesystem,
-            $this->translator,
-            $this->shippingLabelsPath
-        );
+        $exportShipmentEvent = new ResourceControllerEvent($exportObject);
+        $this->exportShipment($exportShipmentEvent);
+    }
 
-        $this->exportShipment($event);
+    public function export(ShippingExportInterface $shippingExport): void
+    {
+        $shippingExport->setState(ShippingExportInterface::STATE_EXPORTED);
+        $shippingExport->setExportedAt(new \DateTime());
+        $this->shippingExportRepository->add($shippingExport);
     }
 }

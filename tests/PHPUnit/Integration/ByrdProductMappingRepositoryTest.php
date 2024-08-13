@@ -1,10 +1,11 @@
 <?php
 
 /*
- * This file was created by developers working at BitBag
- * Do you need more information about us and what we do? Visit our https://bitbag.io website!
- * We are hiring developers from all over the world. Join us and start your new, exciting adventure and become part of us: https://bitbag.io/career
-*/
+ * This file has been created by developers from BitBag.
+ * Feel free to contact us once you face any issues or want to start
+ * You can find more information about us on https://bitbag.io and write us
+ * an email on hello@bitbag.io.
+ */
 
 declare(strict_types=1);
 
@@ -16,17 +17,18 @@ use Sylius\Component\Core\Repository\ProductRepositoryInterface;
 final class ByrdProductMappingRepository extends IntegrationTestCase
 {
     /** @var ProductRepositoryInterface */
-    private $productRepository = null;
+    private $productRepository;
 
     /** @var ByrdProductMappingRepositoryInterface */
-    private $byrdProductMappingRepository = null;
+    private $byrdProductMappingRepository;
 
     public function SetUp(): void
     {
         parent::SetUp();
+        $container = self::getContainer();
 
-        $this->productRepository = self::$container->get('sylius.repository.product');
-        $this->byrdProductMappingRepository = self::$container->get('bitbag.byrd_shipping_export_plugin.repository.byrd_product_mapping');
+        $this->productRepository = $container->get('sylius.repository.product');
+        $this->byrdProductMappingRepository = $container->get('bitbag.byrd_shipping_export_plugin.repository.byrd_product_mapping');
     }
 
     public function test_mapping_for_product_was_found(): void

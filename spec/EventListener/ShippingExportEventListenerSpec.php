@@ -15,18 +15,20 @@ use BitBag\SyliusByrdShippingExportPlugin\Api\Exception\ByrdApiException;
 use BitBag\SyliusByrdShippingExportPlugin\EventListener\ShippingExportEventListener;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingExportInterface;
 use BitBag\SyliusShippingExportPlugin\Entity\ShippingGatewayInterface;
-use BitBag\SyliusShippingExportPlugin\Event\ExportShipmentEvent;
+use BitBag\SyliusShippingExportPlugin\Repository\ShippingExportRepository;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingExportRepositoryInterface;
 use BitBag\SyliusShippingExportPlugin\Repository\ShippingGatewayRepositoryInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
+use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
-use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Flash\FlashBagInterface;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ShippingExportEventListenerSpec extends ObjectBehavior
@@ -35,20 +37,21 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         ByrdHttpClientInterface $byrdHttpClient,
         EntityManagerInterface $entityManager,
         ShippingExportRepositoryInterface $shippingExportRepository,
+        RequestStack $requestStack,
+        SessionInterface $session,
         FlashBagInterface $flashBag,
-        Filesystem $filesystem,
         TranslatorInterface $translator,
         ShippingGatewayRepositoryInterface $shippingGatewayRepository
     ): void {
+        $session->getBag('flashes')->willReturn($flashBag);
+        $requestStack->getSession()->willReturn($session);
         $this->beConstructedWith(
             $byrdHttpClient,
             $entityManager,
             $shippingExportRepository,
-            $flashBag,
-            $filesystem,
+            $requestStack,
             $translator,
-            $shippingGatewayRepository,
-            "shipping-labels-path"
+            $shippingGatewayRepository
         );
     }
 
@@ -62,18 +65,30 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         OrderInterface $order,
         ShipmentInterface $shipment,
         ShippingGatewayInterface $shippingGateway,
-        ExportShipmentEvent $event
+        RequestStack $requestStack,
+        SessionInterface $session,
+        FlashBagInterface $flashBag,
+        ShippingExportRepository $shippingExportRepository,
+        ResourceControllerEvent $exportShipmentEvent,
     ): void
     {
         $shippingExport->getShipment()->willReturn($shipment);
         $shippingExport->getShippingGateway()->willReturn($shippingGateway);
         $shipment->getOrder()->willReturn($order);
 
-        $event->getShippingExport()->willReturn($shippingExport);
-        $event->addSuccessFlash()->shouldBeCalled();
-        $event->exportShipment()->shouldBeCalled();
+        $exportShipmentEvent->getSubject()->willReturn($shippingExport);
 
-        $this->exportShipment($event);
+        $requestStack->getSession()->willReturn($session);
+        $session->getBag('flashes')->willReturn($flashBag);
+        $flashBag->add(
+            'success',
+            'bitbag.ui.shipment_data_has_been_exported'
+        );
+
+        $shippingExport->setState(ShippingExportInterface::STATE_EXPORTED);
+        $shippingExport->setExportedAt(Argument::type(\DateTime::class));
+
+        $this->exportShipment($exportShipmentEvent);
     }
 
     function it_adds_flash_on_failed_export(
@@ -83,7 +98,10 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         ShipmentInterface $shipment,
         ShippingGatewayInterface $shippingGateway,
         EntityManagerInterface $entityManager,
-        ExportShipmentEvent $event
+        RequestStack $requestStack,
+        SessionInterface $session,
+        FlashBagInterface $flashBag,
+        ResourceControllerEvent $exportShipmentEvent,
     ): void
     {
         $shippingExport->getShipment()->willReturn($shipment);
@@ -92,14 +110,20 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         $entityManager->flush()->shouldBeCalled();
         $shipment->getOrder()->willReturn($order);
 
-        $event->getShippingExport()->willReturn($shippingExport);
-        $event->addErrorFlash("Byrd error for order : ")->shouldBeCalled();
+        $exportShipmentEvent->getSubject()->willReturn($shippingExport);
+
+        $requestStack->getSession()->willReturn($session);
+        $session->getBag('flashes')->willReturn($flashBag);
+        $flashBag->add(
+            'error',
+            'Byrd error for order : '
+        );
 
         $order->getNumber()->shouldBeCalled();
 
         $byrdHttpClient->createShipment($order, $shippingGateway)->willThrow(ByrdApiException::class);
 
-        $this->exportShipment($event);
+        $this->exportShipment($exportShipmentEvent);
     }
 
     function it_auto_exports_shipment(
@@ -109,7 +133,7 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         OrderInterface $order,
         ShipmentInterface $shipment,
         ShippingExportRepositoryInterface $shippingExportRepository,
-        ShippingExportInterface $shippingExport
+        ShippingExportInterface $shippingExport,
     ): void {
         $shippingGatewayRepository->findOneByCode('byrd')->willReturn($shippingGateway);
         $shippingGateway->getConfig()->willReturn([
@@ -128,6 +152,7 @@ class ShippingExportEventListenerSpec extends ObjectBehavior
         $shippingExport->getState()->willReturn("new");
         $shippingExport->getShipment()->willReturn($shipment);
         $shippingExport->getShippingGateway()->willReturn($shippingGateway);
+        $shippingExportRepository->add($shippingExport)->shouldBeCalled();
 
         $shippingExport->setState("exported")->shouldBeCalled();
         $shippingExport->setExportedAt(Argument::type(\DateTime::class))->shouldBeCalled();
